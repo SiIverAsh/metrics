@@ -99,6 +99,16 @@ export class Analyzer {
       await fs.rm(path, {recursive: true, force: true})
       await fs.mkdir(path, {recursive: true})
       await git(path).clone(url, ".",).status()
+      
+      await git(path).raw([
+        "fetch",
+        "origin",
+        "+refs/heads/*:refs/remotes/origin/*",
+        "+refs/pull/*/head:refs/remotes/origin/pull/*",
+        "--tags",
+        "--force",
+    ])
+      
       this.debug(`cloned https://github.com/${repo} to ${path}`)
       if (branch) {
         this.debug(`switching to branch ${branch} for ${repo}`)
