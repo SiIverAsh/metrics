@@ -98,7 +98,7 @@ export class Analyzer {
       this.debug(`cloning https://github.com/${repo} to ${path}`)
       await fs.rm(path, {recursive: true, force: true})
       await fs.mkdir(path, {recursive: true})
-      await git(path).clone(url, ".", ["--single-branch"]).status()
+      await git(path).clone(url, ".",).status()
       this.debug(`cloned https://github.com/${repo} to ${path}`)
       if (branch) {
         this.debug(`switching to branch ${branch} for ${repo}`)
