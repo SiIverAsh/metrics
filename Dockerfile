@@ -27,6 +27,7 @@ RUN apt-get update \
     ruby-full \
     git \
     g++ \
+    make \
     cmake \
     pkg-config \
     libssl-dev \
