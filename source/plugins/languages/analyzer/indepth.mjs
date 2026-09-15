@@ -96,14 +96,14 @@ export class IndepthAnalyzer extends Analyzer {
       for (const author of this.authoring) {
         //Search by --author
         {
-          const output = await this.shell.run(`git log --author='${author}' --pretty=format:"%H" --regexp-ignore-case --no-merges`, {cwd: path, env: {LANG: "en_GB"}}, {log: false, debug: false, prefixed: false})
+          const output = await this.shell.run(`git log --author='${author}' --pretty=format:"%H" --regexp-ignore-case --all`, {cwd: path, env: {LANG: "en_GB"}}, {log: false, debug: false, prefixed: false})
           const hashes = output.split("\n").map(line => line.trim()).filter(line => this.markers.hash.test(line))
           hashes.forEach(hash => commits.add(hash))
           this.debug(`found ${hashes.length} for ${author} (using --author)`)
         }
         //Search by --grep
         {
-          const output = await this.shell.run(`git log --grep='${author}' --pretty=format:"%H"  --regexp-ignore-case --no-merges`, {cwd: path, env: {LANG: "en_GB"}}, {log: false, debug: false, prefixed: false})
+          const output = await this.shell.run(`git log --grep='${author}' --pretty=format:"%H"  --regexp-ignore-case --all`, {cwd: path, env: {LANG: "en_GB"}}, {log: false, debug: false, prefixed: false})
           const hashes = output.split("\n").map(line => line.trim()).filter(line => this.markers.hash.test(line))
           hashes.forEach(hash => commits.add(hash))
           this.debug(`found ${hashes.length} for ${author} (using --grep)`)
