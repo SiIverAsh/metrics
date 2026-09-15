@@ -1,4 +1,11 @@
-# Setup
+# Base image
+FROM node:20-bookworm-slim
+
+# Copy Metrics source code
+COPY . /metrics
+WORKDIR /metrics
+
+# Make action executable
 RUN chmod +x /metrics/source/app/action/index.mjs
 
 # Install Chrome and system dependencies
@@ -35,9 +42,16 @@ RUN apt-get update \
 RUN curl -fsSL https://deno.land/x/install/install.sh \
   | DENO_INSTALL=/usr/local sh
 
-# Install licensed
+# Install GitHub Licensed
 RUN gem install licensed --no-document
 
-# Install and build Metrics
+# Install Node dependencies and build Metrics
 RUN npm ci
 RUN npm run build
+
+# Environment variables
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
+ENV PUPPETEER_BROWSER_PATH=google-chrome-stable
+
+# Start GitHub Action
+ENTRYPOINT ["node", "/metrics/source/app/action/index.mjs"]
