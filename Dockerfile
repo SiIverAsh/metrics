@@ -42,8 +42,9 @@ RUN apt-get update \
 RUN curl -fsSL https://deno.land/x/install/install.sh \
   | DENO_INSTALL=/usr/local sh
 
-# Install GitHub Licensed
-RUN gem install licensed --no-document
+# Install Deno
+RUN curl -fsSL https://deno.land/x/install/install.sh \
+  | DENO_INSTALL=/usr/local sh
 
 # Install Node dependencies and build Metrics
 RUN npm ci
