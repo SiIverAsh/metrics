@@ -54,7 +54,7 @@ export default async function({login, q, imports, data, account}, {enabled = fal
 async function pickOnlyGitHubPublicRepos({projects, axios, login, limit}) {
   const result = []
 
-  for await (const project of projects) {
+  for await (const project of projects ?? []) {
     if (result.length >= limit)
       break
     try {
