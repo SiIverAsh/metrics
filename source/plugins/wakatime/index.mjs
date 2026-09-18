@@ -31,10 +31,19 @@ export default async function({login, q, imports, data, account}, {enabled = fal
 
     const projectStats = stats.projects?.map(({name, percent, total_seconds: total}) => ({name, percent: percent / 100, total})).sort((a, b) => b.percent - a.percent)
     const projects = showOnlyGitHubPublicRepos ? await pickOnlyGitHubPublicRepos({limit, login, axios: imports.axios, projects: projectStats}) : projectStats?.slice(0, limit)
+    const bestDay = stats.best_day
+      ? {date: formatDate(stats.best_day.date), duration: stats.best_day.text}
+      : null
+    const mainCategory = stats.categories
+      ?.map(({name, percent, total_seconds: total}) => ({name, percent: percent / 100, total}))
+      .sort((a, b) => b.percent - a.percent)[0]
 
     const result = {
       sections,
       days,
+      period: ({7: "7-day statistics", 30: "30-day statistics", 180: "6-month statistics", 365: "1-year statistics"})[days] ?? `${days}-day statistics`,
+      bestDay,
+      mainCategory,
       projects,
       time: {
         total: (others ? stats.total_seconds_including_other_language : stats.total_seconds) / (60 * 60),
@@ -52,6 +61,13 @@ export default async function({login, q, imports, data, account}, {enabled = fal
   catch (error) {
     throw imports.format.error(error)
   }
+}
+
+function formatDate(date) {
+  const [, month, day] = date?.match(/^(?:\d{4})-(\d{2})-(\d{2})$/) ?? []
+  if ((!month) || (!day))
+    return date
+  return `${["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][Number(month) - 1]} ${Number(day)}`
 }
 
 async function getLanguageColors({axios, url, login}) {

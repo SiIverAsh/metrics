@@ -33,12 +33,30 @@
               Mostly coding in <%= plugins.wakatime.languages[0]?.name %>
             </div>
           <% } %>
+          <% if (plugins.wakatime.mainCategory) { %>
+            <div class="field">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16"><path fill-rule="evenodd" d="M8 1.5a.75.75 0 01.75.75v5h5a.75.75 0 010 1.5h-5v5a.75.75 0 01-1.5 0v-5h-5a.75.75 0 010-1.5h5v-5A.75.75 0 018 1.5z"></path></svg>
+              Mostly <%= plugins.wakatime.mainCategory.name %> activity
+            </div>
+          <% } %>
         </section>
         <section class="largeable-column-fields">
           <% if (plugins.wakatime.sections.includes("time")) { %>
             <div class="field">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16"><path fill-rule="evenodd" d="M6 2a.75.75 0 01.696.471L10 10.731l1.304-3.26A.75.75 0 0112 7h3.25a.75.75 0 010 1.5h-2.742l-1.812 4.528a.75.75 0 01-1.392 0L6 4.77 4.696 8.03A.75.75 0 014 8.5H.75a.75.75 0 010-1.5h2.742l1.812-4.529A.75.75 0 016 2z"></path></svg>
               ~<%= f(Math.ceil(plugins.wakatime.time.daily)) %> hour<%= s(plugins.wakatime.time.total) %> of coding per day
+            </div>
+          <% } %>
+          <% if (plugins.wakatime.bestDay) { %>
+            <div class="field">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16"><path fill-rule="evenodd" d="M8 .25a.75.75 0 01.673.418l1.882 3.815 4.21.612a.75.75 0 01.416 1.279l-3.046 2.97.719 4.192a.75.75 0 01-1.088.79L8 12.347l-3.766 1.98a.75.75 0 01-1.088-.791l.719-4.192-3.046-2.97a.75.75 0 01.416-1.279l4.21-.612L7.327.668A.75.75 0 018 .25zm0 2.445L6.615 5.502a.75.75 0 01-.564.41l-3.098.45 2.241 2.185a.75.75 0 01.216.664l-.529 3.085 2.77-1.456a.75.75 0 01.698 0l2.77 1.456-.529-3.085a.75.75 0 01.216-.664l2.241-2.184-3.098-.45a.75.75 0 01-.564-.41L8 2.694z"></path></svg>
+              Best day: <%= plugins.wakatime.bestDay.date %> — <%= plugins.wakatime.bestDay.duration %>
+            </div>
+          <% } %>
+          <% if (plugins.wakatime.period) { %>
+            <div class="field">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16"><path fill-rule="evenodd" d="M4.75 0a.75.75 0 01.75.75V2h5V.75a.75.75 0 011.5 0V2h.25A2.75 2.75 0 0115 4.75v8.5A2.75 2.75 0 0112.25 16h-8.5A2.75 2.75 0 011 13.25v-8.5A2.75 2.75 0 013.75 2H4V.75A.75.75 0 014.75 0zM2.5 6v7.25c0 .69.56 1.25 1.25 1.25h8.5c.69 0 1.25-.56 1.25-1.25V6h-11z"></path></svg>
+              <%= plugins.wakatime.period %>
             </div>
           <% } %>
           <% if ((plugins.wakatime.sections.includes("editors"))&&(plugins.wakatime.editors?.length)) { %>
