@@ -56,15 +56,84 @@
         </section>
       </div>
 
-      <% { const sections = plugins.wakatime.sections.filter(x => /-graphs$/.test(x)).map(x => x.replace(/-graphs$/, "")), slots = 2 + large %>
-      <% for (let i = 0; i < sections.length; i+=slots) { %>
-          <div class="row">
-          <% for (let j = 0; j < slots; j++) { const key = sections[i+j] ; const section = plugins.wakatime[key] ; if (!key) continue %>
+      <% {
+        const sections = plugins.wakatime.sections.filter(x => /-graphs$/.test(x)).map(x => x.replace(/-graphs$/, ""))
+        const languageSection = sections.includes("languages") ? plugins.wakatime.languages : null
+        const remainingSections = sections.filter(section => section !== "languages")
+        const fallbackColors = ["#2f81f7", "#58a6ff", "#f778ba", "#3fb950", "#d29922", "#a371f7", "#f0883e", "#8b949e"]
+        const languageTotal = languageSection?.reduce((total, {percent}) => total + percent, 0) || 1
+        const point = (position, radius = 70) => {
+          const angle = 2 * Math.PI * position - Math.PI / 2
+          return [90 + radius * Math.cos(angle), 90 + radius * Math.sin(angle)]
+        }
+        const path = (start, end) => {
+          const [startX, startY] = point(start)
+          const [endX, endY] = point(end)
+          return `M 90 90 L ${startX.toFixed(3)} ${startY.toFixed(3)} A 70 70 0 ${end - start > 0.5 ? 1 : 0} 1 ${endX.toFixed(3)} ${endY.toFixed(3)} Z`
+        }
+        const duration = total => {
+          const hours = Math.floor(total / 3600)
+          const minutes = Math.floor((total % 3600) / 60)
+          return [hours ? `${hours}h` : "", minutes ? `${minutes}m` : ""].filter(Boolean).join(" ") || "<1m"
+        }
+        let offset = 0
+        const languageSlices = languageSection?.map((language, index) => {
+          const share = language.percent / languageTotal
+          const slice = {...language, share, start: offset, end: offset + share, color: language.color ?? fallbackColors[index % fallbackColors.length]}
+          offset += share
+          return slice
+        }) ?? []
+      %>
+
+      <% if (sections.includes("languages")) { %>
+        <div class="row">
+          <section class="column chart" style="width:100%">
+            <h3>Languages</h3>
+            <% if (languageSlices.length) { %>
+              <div style="display:flex;align-items:center;justify-content:center;width:100%;min-height:180px;margin:4px 0 8px">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180" width="190" height="180" style="flex-shrink:0">
+                  <% for (const slice of languageSlices) { %>
+                    <% if (slice.share >= 0.999999) { %>
+                      <circle cx="90" cy="90" r="70" fill="<%= slice.color %>"></circle>
+                    <% } else if (slice.share > 0) { %>
+                      <path d="<%= path(slice.start, slice.end) %>" fill="<%= slice.color %>" stroke="rgba(0,0,0,.65)" stroke-width="1"></path>
+                    <% } %>
+                  <% } %>
+                  <% for (const slice of languageSlices.slice(0, 3).filter(({share}) => share >= 0.08)) {
+                    const [labelX, labelY] = point((slice.start + slice.end) / 2, 42)
+                  %>
+                    <text x="<%= labelX %>" y="<%= labelY %>" fill="#ffffff" font-size="11" text-anchor="middle" dominant-baseline="middle" style="paint-order:stroke;stroke:#000000;stroke-width:2px;stroke-opacity:.55"><%= slice.name %></text>
+                  <% } %>
+                </svg>
+                <div style="display:flex;flex:1;flex-direction:column;min-width:0;margin-left:10px">
+                  <% for (const slice of languageSlices) { %>
+                    <div style="display:flex;align-items:center;min-width:0;line-height:18px;font-size:11px">
+                      <span style="display:block;width:10px;height:10px;margin-right:7px;flex-shrink:0;background-color:<%= slice.color %>"></span>
+                      <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap"><%= slice.name %> - <%= duration(slice.total) %> (<%= (100 * slice.percent).toFixed(2) %>%)</span>
+                    </div>
+                  <% } %>
+                </div>
+              </div>
+            <% } else { %>
+              <div class="chart-bars horizontal">
+                <div class="entry">
+                  <div class="empty">No activity</div>
+                </div>
+              </div>
+            <% } %>
+          </section>
+        </div>
+      <% } %>
+
+      <% { const slots = 2 + large %>
+      <% for (let i = 0; i < remainingSections.length; i+=slots) { %>
+        <div class="row">
+          <% for (let j = 0; j < slots; j++) { const key = remainingSections[i+j] ; const section = plugins.wakatime[key] ; if (!key) continue %>
             <section class="column chart">
-              <h3><%= {languages:"Language activity", projects:"Projects activity", editors:"Code editors", os:"Operating systems"}[key] %></h3>
+              <h3><%= {projects:"Projects activity", editors:"Code editors", os:"Operating systems"}[key] %></h3>
               <div class="chart-bars horizontal">
                 <% if (section?.length) { %>
-                  <% for (const {name, percent, total} of section) { %>
+                  <% for (const {name, percent} of section) { %>
                     <div class="entry">
                       <span class="name"><%= name %></span>
                       <div class="bar" style="width: <%= percent*80 %>%; background-color: var(--color-calendar-graph-day-L<%= Math.ceil(percent/0.25) %>-bg)"></div>
@@ -78,9 +147,10 @@
                 <% } %>
               </div>
             </section>
-        <% } %>
+          <% } %>
         </div>
       <% }} %>
+      <% } %>
 
     <% } %>
   </section>

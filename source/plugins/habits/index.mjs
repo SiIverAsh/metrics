@@ -15,7 +15,7 @@ export default async function({login, data, rest, imports, q, account}, {enabled
     skipped.push(...data.shared["repositories.skipped"])
 
     //Initialization
-    const habits = {facts, charts, trim, lines: {average: {chars: 0}}, commits: {fetched: 0, hour: NaN, hours: {}, day: NaN, days: {}}, indents: {style: "", spaces: 0, tabs: 0}, linguist: {available: false, ordered: [], languages: {}}}
+    const habits = {facts, charts, trim, activity: {activeDays: 0, longestStreak: 0, weekend: 0}, lines: {average: {chars: 0}}, commits: {fetched: 0, hour: NaN, hours: {}, day: NaN, days: {}}, indents: {style: "", spaces: 0, tabs: 0}, linguist: {available: false, ordered: [], languages: {}}}
     const pages = Math.ceil(from / 100)
     const offset = data.config.timezone?.offset ?? 0
 
@@ -44,8 +44,8 @@ export default async function({login, data, rest, imports, q, account}, {enabled
 
     //Retrieve edited files and filter edited lines (those starting with +/-) from patches
     console.debug(`metrics/compute/${login}/plugins > habits > loading patches`)
-    const patches = [``
-      ,await Promise.allSettled(
+    const patches = [
+      ...await Promise.allSettled(
         commits
           .flatMap(({payload}) => payload.commits ?? [])
           .filter(({author}) => data.shared["commits.authoring"].filter(authoring => author?.login?.toLocaleLowerCase().includes(authoring) || author?.email?.toLocaleLowerCase().includes(authoring) || author?.name?.toLocaleLowerCase().includes(authoring)).length)
@@ -56,6 +56,26 @@ export default async function({login, data, rest, imports, q, account}, {enabled
       .map(({value}) => value)
       .flatMap(files => files.map(file => ({name: imports.paths.basename(file.filename), patch: file.patch ?? ""})))
       .map(({name, patch}) => ({name, patch: patch.split("\n").filter(line => /^[+]/.test(line)).map(line => line.substring(1)).join("\n")}))
+
+    //Activity overview
+    {
+      const dates = [...new Set(commits
+        .map(({created_at}) => new Date(new Date(created_at).getTime() + offset).toISOString().slice(0, 10)))]
+        .sort()
+      habits.activity.activeDays = dates.length
+      habits.activity.weekend = commits.length
+        ? Math.round(100 * commits.filter(({created_at}) => [0, 6].includes(new Date(new Date(created_at).getTime() + offset).getDay())).length / commits.length)
+        : 0
+
+      let currentStreak = 0
+      let previous = null
+      for (const date of dates) {
+        const timestamp = Date.parse(`${date}T00:00:00Z`)
+        currentStreak = previous !== null && timestamp - previous === 24 * 60 * 60 * 1000 ? currentStreak + 1 : 1
+        habits.activity.longestStreak = Math.max(habits.activity.longestStreak, currentStreak)
+        previous = timestamp
+      }
+    }
 
     //Commit day
     {

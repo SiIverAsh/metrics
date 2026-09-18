@@ -25,6 +25,9 @@ export default async function({login, q, imports, data, account}, {enabled = fal
     //Querying api and format result (https://wakatime.com/developers#stats)
     console.debug(`metrics/compute/${login}/plugins > wakatime > querying api`)
     const {data: {data: stats}} = await imports.axios.get(`${url}/api/v1/users/${user}/stats/${range}?api_key=${token}`)
+    const languageColors = sections.some(section => section.startsWith("languages"))
+      ? await getLanguageColors({axios: imports.axios, url, login})
+      : {}
 
     const projectStats = stats.projects?.map(({name, percent, total_seconds: total}) => ({name, percent: percent / 100, total})).sort((a, b) => b.percent - a.percent)
     const projects = showOnlyGitHubPublicRepos ? await pickOnlyGitHubPublicRepos({limit, login, axios: imports.axios, projects: projectStats}) : projectStats?.slice(0, limit)
@@ -37,7 +40,7 @@ export default async function({login, q, imports, data, account}, {enabled = fal
         total: (others ? stats.total_seconds_including_other_language : stats.total_seconds) / (60 * 60),
         daily: (others ? stats.daily_average_including_other_language : stats.daily_average) / (60 * 60),
       },
-      languages: stats.languages?.map(({name, percent, total_seconds: total}) => ({name, percent: percent / 100, total})).filter(({name}) => imports.filters.text(name, _ignored)).sort((a, b) => b.percent - a.percent).slice(0, limit),
+      languages: stats.languages?.map(({name, percent, total_seconds: total}) => ({name, percent: percent / 100, total, color: languageColors[name] ?? "#8b949e"})).filter(({name}) => imports.filters.text(name, _ignored)).sort((a, b) => b.percent - a.percent).slice(0, limit),
       os: stats.operating_systems?.map(({name, percent, total_seconds: total}) => ({name, percent: percent / 100, total})).sort((a, b) => b.percent - a.percent).slice(0, limit),
       editors: stats.editors?.map(({name, percent, total_seconds: total}) => ({name, percent: percent / 100, total})).sort((a, b) => b.percent - a.percent).slice(0, limit),
     }
@@ -48,6 +51,18 @@ export default async function({login, q, imports, data, account}, {enabled = fal
   //Handle errors
   catch (error) {
     throw imports.format.error(error)
+  }
+}
+
+async function getLanguageColors({axios, url, login}) {
+  try {
+    console.debug(`metrics/compute/${login}/plugins > wakatime > querying language colors`)
+    const {data: {data: languages}} = await axios.get(`${url}/api/v1/program_languages?per_page=1000`)
+    return Object.fromEntries(languages.map(({name, color}) => [name, color]).filter(([, color]) => color))
+  }
+  catch (error) {
+    console.debug(`metrics/compute/${login}/plugins > wakatime > failed to query language colors (${error})`)
+    return {}
   }
 }
 
